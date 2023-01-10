@@ -24,8 +24,17 @@ void TT_init(TinyTask *tt)
 void TT_start(TinyTask *tt)
 {
     // Task0 表示系统进程
-    if (tt->tasks[0].task_control.state == READY) {
-        SP = tt->tasks[0].contet_sp;
+    unsigned char i;
+    while (1) {
+        for (i = 0; i < MAX_TASKS; i++) {
+            if (tt->tasks[i].task_control.valid) {
+                if (tt->tasks[i].task_control.state == READY) {
+                    tt->tasks[i].task_control.state == RUNNING;
+                    tt->tasks[i].func(tt->tasks[i].args);
+                    tt->tasks[i].task_control.state == STOP;
+                }
+            }
+        }
     }
 }
 /// @brief  停止
@@ -75,14 +84,14 @@ void TT_cancel(TinyTask *tt, unsigned char task_id)
 /// @param tt
 void TT_yield(TinyTask *tt)
 {
-    tt->tasks[tt->current_task_id].contet_sp = SP; // 保存上下文
+    tt->tasks[tt->current_task_id].context_sp = SP; // 保存上下文
     if (tt->current_task_id + 1 > MAX_TASKS) {
         tt->current_task_id = 0; // 说明到底了, 回到第一个任务
     }
     // 此处应该处理优先级, 不过目前暂时先实现最简单的切换效果
     // --> 优先级 MIN = 排序任务表()
     // --> yield-to-min(SP = tt->tasks[优先级最小的].contet_sp)
-    SP = tt->tasks[tt->current_task_id + 1].contet_sp;
+    SP = tt->tasks[tt->current_task_id + 1].context_sp;
 }
 
 /// @brief 任务表
@@ -121,7 +130,7 @@ void main()
     // task1
     Task t0;
     t0.id                     = 0;
-    t0.contet_sp              = 0;
+    t0.context_sp             = 0;
     t0.time_slice             = 100;
     t0.sleep_time             = 0;
     t0.task_control.state     = READY;
